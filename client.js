@@ -2,10 +2,11 @@
 
 const net = require('net');
 const readline = require('readline');
+const { mutableStream } = require('./tools');
 
 const rl = readline.createInterface({
 	input: process.stdin,
-	output: process.stdout
+	output: mutableStream(process.stdout),
 });
 
 const socket = new net.Socket();

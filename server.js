@@ -1,18 +1,14 @@
 'use strict';
 
 const net = require('net');
+const { ChatRooms } = require('./rooms');
+const { writeToSockets } = require('./tools');
 
+const rooms = new ChatRooms().create(5);
 const sockets = new Set();
 
-const writeToAll = (msg, sender) => {
-    sockets.forEach((socket) => {
-        if (socket !== sender)
-            socket.write(msg);
-    });
-};
-
 const onData = (socket, data) => {
-    writeToAll(data, socket);
+    writeToSockets(data, socket, rooms.getRoom(1));
 };
 
 const onError = (err) => {
@@ -27,7 +23,8 @@ const onConnection = (socket) => {
     const ip = socket.remoteAddress;
     const msg = `${ip} connected!`;
     sockets.add(socket);
-    writeToAll(msg, socket);
+    rooms.addToRoom(socket, 1);
+    writeToSockets(msg, socket, rooms.getRoom(1));
 
     socket.setEncoding('utf8');
     socket.on('data', onData.bind(null, socket));
