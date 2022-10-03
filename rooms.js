@@ -10,7 +10,7 @@ class ChatRooms {
     }
     create(count) {
         this.countRooms = count;
-        for (let i = 1; i !== count; i++) {
+        for (let i = 1; i <= count; i++) {
             this.rooms[i] = new Set();
         }
         return this;

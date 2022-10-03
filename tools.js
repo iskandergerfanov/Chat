@@ -1,9 +1,10 @@
 'use strict';
 
 const writeToSockets = (msg, sender, recievers) => {
+    const i = JSON.stringify({ 'type': 'msg', msg });
     recievers.forEach((socket) => {
         if (socket !== sender)
-            socket.write(msg);
+            socket.write(i);
     });
 };
 

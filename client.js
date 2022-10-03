@@ -1,27 +1,59 @@
 'use strict';
 
 const net = require('net');
-const readline = require('readline');
-const { mutableStream } = require('./tools');
-
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: mutableStream(process.stdout),
-});
+const rl = require('./r1');
 
 const socket = new net.Socket();
 
-socket.on('connect', () => {
-  rl.question('Enter your username: ', (username) => {
-    if (username) socket.write(username);
-    rl.on('line', (line) => {
-        socket.write(line);
-    });
-  });
-});
+// login, onServer, inRoom;
+let state = 'onLogin';
+let maxRooms = 0;
+let roomID = 1;
 
-socket.on('data', (data) => {
-  console.log(data.toString());
+const onConnect = async () => {
+  const login = await rl.getUserInfo('enter login');
+  const password = await rl.getUserInfo('enter password');
+  socket.write(JSON.stringify({ type: 'login', login, password }));
+  rl.on('line', async (line) => {
+    switch (state) {
+      case 'onServer':
+        roomID = await rl.getUserInfo('enter room id');
+        if (roomID > maxRooms) {
+          socket.write(JSON.stringify({ roomID }));
+        } else {
+          console.log('Wrong roomID');
+        }
+        break;
+      case 'inRoom':
+        socket.write(JSON.stringify({ type: 'msg', msg: line }));
+        break;
+    }
+  });
+};
+
+socket.on('connect', async () => await onConnect());
+
+socket.on('data', (json) => {
+  const message = JSON.parse(json);
+  const { type, msg } = message;
+
+  switch (type) {
+    case 'msg':
+      console.log(msg);
+      break;
+    case 'info':
+      console.log(message['info']);
+      break;
+    case 'toRoom':
+      maxRooms = message['maxRooms'];
+      break;
+    case 'onServer':
+        state = 'onServer';
+        break;
+    case 'inRoom':
+        state = 'inRoom';
+        break;
+  }
 });
 
 socket.on('error', (err) => {
