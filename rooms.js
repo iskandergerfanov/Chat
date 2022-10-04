@@ -5,8 +5,8 @@ class ChatRooms {
         this.rooms = {};
         this.countRooms = undefined;
     }
-    _isNotRoom(roomNum) {
-        return (!roomNum || roomNum > this.countRooms || roomNum < 1);
+    _isNotRoom(room) {
+        return (!room || room > this.countRooms || room < 1);
     }
     create(count) {
         this.countRooms = count;
@@ -15,20 +15,23 @@ class ChatRooms {
         }
         return this;
     }
-    sendToRoom(socket, msg, roomNum) {
-        if (this._isNotRoom(roomNum)) return;
-        this.rooms[roomNum].forEach((sckt) => {
+    sendToRoom(socket, msg, room) {
+        if (this._isNotRoom(room)) return;
+        this.rooms[room].forEach((sckt) => {
             if (sckt !== socket) sckt.write(msg);
         });
     }
-    addToRoom(socket, roomNum) {
-        if (this._isNotRoom(roomNum)) return;
+    addToRoom(socket, room) {
+        if (this._isNotRoom(room)) return;
         if (!socket) return;
-        this.rooms[roomNum].add(socket);
+        this.rooms[room].add(socket);
     }
-    getRoom(roomNum) {
-        if (this._isNotRoom(roomNum)) return;
-        return this.rooms[roomNum];
+    deleteUser(socket, room) {
+        this.rooms[room].delete(socket);
+    }
+    getRoom(room) {
+        if (this._isNotRoom(room)) return;
+        return this.rooms[room];
     }
 }
 

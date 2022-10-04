@@ -5,54 +5,44 @@ const rl = require('./r1');
 
 const socket = new net.Socket();
 
-// login, onServer, inRoom;
-let state = 'onLogin';
 let maxRooms = 0;
-let roomID = 1;
 
+const chain = (arg2) => (arg1) => {
+  return arg1 < arg2;
+};
+
+// add @to-private
 const onConnect = async () => {
   const login = await rl.getUserInfo('enter login');
   const password = await rl.getUserInfo('enter password');
   socket.write(JSON.stringify({ type: 'login', login, password }));
   rl.on('line', async (line) => {
-    switch (state) {
-      case 'onServer':
-        roomID = await rl.getUserInfo('enter room id');
-        if (roomID > maxRooms) {
-          socket.write(JSON.stringify({ roomID }));
-        } else {
-          console.log('Wrong roomID');
-        }
-        break;
-      case 'inRoom':
-        socket.write(JSON.stringify({ type: 'msg', msg: line }));
-        break;
+    if (line.startsWith('/changeRoom')) {
+      const room = await rl.getUserInfoCond('Enter room', chain(maxRooms));
+      socket.write(JSON.stringify({ type: 'changeRoom',  room }));
+    } else {
+      socket.write(JSON.stringify({ type: 'msg', msg: line }));
     }
   });
 };
 
 socket.on('connect', async () => await onConnect());
 
+// if it recieve format not like json it will broken
 socket.on('data', (json) => {
   const message = JSON.parse(json);
-  const { type, msg } = message;
+  const { type, msg, room, info } = message;
 
   switch (type) {
     case 'msg':
       console.log(msg);
       break;
     case 'info':
-      console.log(message['info']);
+      console.log(info);
       break;
-    case 'toRoom':
-      maxRooms = message['maxRooms'];
+    case 'forRoom':
+      maxRooms = room;
       break;
-    case 'onServer':
-        state = 'onServer';
-        break;
-    case 'inRoom':
-        state = 'inRoom';
-        break;
   }
 });
 

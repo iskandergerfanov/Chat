@@ -22,6 +22,10 @@ const account = {
         const info = await this.question(str);
         return (info) ? info : this.getUserInfo(str);
     },
+    async getUserInfoCond(str, check) {
+      const info = await this.question(str);
+      return (check(info)) ? info : this.getUserInfoCond(str, check);
+    }
 };
 
 Object.setPrototypeOf(account, rl);
